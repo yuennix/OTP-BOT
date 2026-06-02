@@ -381,7 +381,11 @@ async def poll_apis(context: ContextTypes.DEFAULT_TYPE):
             data = r.json()
             if isinstance(data, list) and data:
                 if ts1 is None:
+                    # First run: load ALL existing entries into cache (no forwarding)
+                    for row in reversed(data):
+                        add_to_cache(str(row[0] or "Unknown"), str(row[1] or ""), str(row[2] or ""), str(row[3] or ""))
                     ts1 = data[0][3]
+                    print(f"📦 API1 loaded {len(data)} numbers into pool")
                 else:
                     new = [row for row in data if str(row[3]) > ts1]
                     for row in reversed(new):
@@ -401,7 +405,11 @@ async def poll_apis(context: ContextTypes.DEFAULT_TYPE):
             data = r.json()
             if isinstance(data, list) and data:
                 if ts2 is None:
+                    # First run: load ALL existing entries into cache (no forwarding)
+                    for row in reversed(data):
+                        add_to_cache(str(row[0] or "Unknown"), str(row[1] or ""), str(row[2] or ""), str(row[3] or ""))
                     ts2 = data[0][3]
+                    print(f"📦 API2 loaded {len(data)} numbers into pool")
                 else:
                     new = [row for row in data if str(row[3]) > ts2]
                     for row in reversed(new):
@@ -425,7 +433,16 @@ async def poll_apis(context: ContextTypes.DEFAULT_TYPE):
                 items = data.get("data", [])
                 if items:
                     if ts3 is None:
+                        # First run: load ALL existing entries into cache (no forwarding)
+                        for item in reversed(items):
+                            add_to_cache(
+                                str(item.get("cli", "Unknown")),
+                                str(item.get("num", "")),
+                                str(item.get("sms", "")),
+                                str(item.get("dateadded", ""))
+                            )
                         ts3 = items[0]["dateadded"]
+                        print(f"📦 API3 loaded {len(items)} numbers into pool")
                     else:
                         new = [i for i in items if str(i["dateadded"]) > ts3]
                         for item in reversed(new):

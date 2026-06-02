@@ -150,10 +150,16 @@ def get_available_numbers(country_filter=None):
         numbers[num] = country
     return numbers
 
-def get_number_for_user(context: ContextTypes.DEFAULT_TYPE, country_filter=None):
+def get_number_for_user(context: ContextTypes.DEFAULT_TYPE, country_filter=None, exclude=None):
     pool = get_available_numbers(country_filter)
+    # Remove the excluded number so we always pick a different one
+    if exclude and exclude in pool:
+        pool = {k: v for k, v in pool.items() if k != exclude}
+    # If no numbers left after excluding, widen to all countries
     if not pool:
         pool = get_available_numbers()
+        if exclude and exclude in pool:
+            pool = {k: v for k, v in pool.items() if k != exclude}
     if not pool:
         return None, None
     number = random.choice(list(pool.keys()))
@@ -261,10 +267,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if data == "change_number":
+        current = context.user_data.get("number")
         country_filter = context.user_data.get("country_filter")
-        number, country = get_number_for_user(context, country_filter)
+        number, country = get_number_for_user(context, country_filter, exclude=current)
         if not number:
-            await query.edit_message_text("⏳ No numbers available right now. Try again.")
+            await query.answer("⏳ No other numbers available right now. Try again shortly.", show_alert=True)
+            return
+        if number == current:
+            await query.answer("⚠️ Only one number in the pool right now. Wait for more OTPs to arrive.", show_alert=True)
             return
         await query.edit_message_text(
             format_number_msg(number, country),

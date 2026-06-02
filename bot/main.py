@@ -387,7 +387,7 @@ async def poll_apis(context: ContextTypes.DEFAULT_TYPE):
     try:
         r = requests.get(API2_URL, params={"token": API2_TOKEN},
                          headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-        if r.status_code == 200:
+        if r.status_code == 200 and r.text.strip().startswith("["):
             data = r.json()
             if isinstance(data, list) and data:
                 if ts2 is None:
